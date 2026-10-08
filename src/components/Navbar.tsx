@@ -1,6 +1,7 @@
 import React from 'react';
 import { Globe, RefreshCw, ArrowLeft } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
+import { AuthUserButton } from './AuthUserButton';
 
 interface NavbarProps {
   currentUrl: string;
@@ -8,6 +9,8 @@ interface NavbarProps {
   canGoBack?: boolean;
   onGoBack?: () => void;
   previousLocationName?: string;
+  onOpenSaved?: () => void;
+  savedCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,6 +19,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   canGoBack = false,
   onGoBack,
   previousLocationName,
+  onOpenSaved = () => {},
+  savedCount = 0,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
@@ -55,8 +60,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Right Actions: Install Mobile App + Refresh */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Actions: Saved Fests + Install Mobile App + Refresh */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Saved Fests */}
+          <AuthUserButton
+            onOpenSaved={onOpenSaved}
+            savedCount={savedCount}
+          />
+
           {/* Prominent In-App Mobile Install Button */}
           <PWAInstallButton />
 

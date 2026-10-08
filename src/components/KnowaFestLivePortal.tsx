@@ -21,20 +21,27 @@ import {
   Sparkles,
   Award,
   Users,
+  Bookmark,
 } from 'lucide-react';
 import { POPULAR_LOCATIONS, TECHNICAL_DEPARTMENTS, KNOWAFEST_BASE_URL } from '../data/initialData';
 import { LiveSymposium, EventFullDetails } from '../types';
+import {
+  saveEventBookmark,
+  removeSavedEvent,
+} from '../services/storageService';
 
 interface KnowaFestLivePortalProps {
   onUrlChange?: (url: string) => void;
   onHistoryStateChange?: (canGoBack: boolean, previousLoc: string) => void;
   registerBackHandler?: (handler: () => void) => void;
+  savedEventIds?: Set<string>;
 }
 
 export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
   onUrlChange,
   onHistoryStateChange,
   registerBackHandler,
+  savedEventIds = new Set(),
 }) => {
   const getInitialLocation = () => {
     if (typeof window !== 'undefined') {
@@ -54,6 +61,7 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
   const [copied, setCopied] = useState(false);
   const [modalCopied, setModalCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [liveEvents, setLiveEvents] = useState<LiveSymposium[]>([]);
   const [currentUrl, setCurrentUrl] = useState(KNOWAFEST_BASE_URL);
   const [frameKey, setFrameKey] = useState(0);
@@ -207,22 +215,39 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
   // Fetch real event details for the searched location from KnowaFest
   const fetchEventsForLocation = async (loc: string, stream: string) => {
     setLoading(true);
+    setErrorMessage('');
     try {
       const params = new URLSearchParams();
       if (loc) params.append('location', loc);
       if (stream) params.append('stream', stream);
 
       const res = await fetch(`/api/knowafest/live-events?${params.toString()}`);
-      const data = await res.json();
+      const text = await res.text();
+
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}: ${text}`);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Failed to parse JSON response:", text);
+        throw new Error('Server returned an invalid response (not JSON)');
+      }
+
       if (data.success) {
         setLiveEvents(data.events || []);
         if (data.url) {
           setCurrentUrl(data.url);
           if (onUrlChange) onUrlChange(data.url);
         }
+      } else {
+        setErrorMessage(data.error || 'Failed to fetch events');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load events for location:', err);
+      setErrorMessage(err.message || 'Unable to load events');
     } finally {
       setLoading(false);
     }
@@ -259,6 +284,22 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
     };
   }, [selectedEvent]);
 
+  // Bookmark / Save Event to Local Storage
+  const handleToggleBookmark = async (fest: LiveSymposium) => {
+    const cleanId = fest.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const isSaved = savedEventIds.has(cleanId);
+
+    try {
+      if (isSaved) {
+        await removeSavedEvent(cleanId);
+      } else {
+        await saveEventBookmark(fest);
+      }
+    } catch (err) {
+      console.error('Error toggling bookmark:', err);
+    }
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     navigateToLocation(locationInput);
@@ -283,14 +324,16 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
     fetchEventsForLocation(activeLocation, streamFilter);
   };
 
+  const allCombinedEvents = liveEvents;
+
   const availableCategories = ['All'];
-  liveEvents.forEach((ev) => {
+  allCombinedEvents.forEach((ev) => {
     if (ev.category && !availableCategories.includes(ev.category)) {
       availableCategories.push(ev.category);
     }
   });
 
-  const filteredEvents = liveEvents.filter((ev) => {
+  const filteredEvents = allCombinedEvents.filter((ev) => {
     if (categoryFilter === 'All') return true;
     return ev.category.toLowerCase().includes(categoryFilter.toLowerCase());
   });
@@ -303,17 +346,19 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
       {/* Main Search & Control Hub */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-md p-4 sm:p-6 shadow-xl space-y-5">
         
-        {/* Heading */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
-              KnowaFest Explorer &bull; College Symposium Directory
-            </h1>
+        {/* Heading & Action Buttons */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
+                KnowaFest Explorer &bull; College Symposium Directory
+              </h1>
+            </div>
+            <p className="text-xs text-slate-400">
+              Live upcoming technical symposiums, hackathons, and workshops across engineering colleges.
+            </p>
           </div>
-          <p className="text-xs text-slate-400">
-            Search any college location to display live upcoming technical symposiums, hackathons, and competitions directly updated from KnowaFest.
-          </p>
         </div>
 
         {/* Location Search Bar with Dedicated Back Button */}
@@ -521,7 +566,7 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
               >
                 <span>Event Details</span>
                 <span className="text-[10px] bg-emerald-950 text-emerald-300 px-1.5 rounded-full font-mono font-bold">
-                  {liveEvents.length}
+                  {filteredEvents.length}
                 </span>
               </button>
 
@@ -600,6 +645,30 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
               )}
             </div>
 
+            {/* Error Notification Banner if backend is connecting */}
+            {errorMessage && (
+              <div className="rounded-xl border border-amber-600/40 bg-amber-950/30 p-3.5 text-xs text-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4 shrink-0 text-amber-400" />
+                  <span>Connecting to live feed... You can retry or browse directly in Live Web View.</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleRefresh}
+                    className="px-2.5 py-1 rounded bg-amber-600/40 hover:bg-amber-600 text-white font-semibold transition-colors"
+                  >
+                    Retry
+                  </button>
+                  <button
+                    onClick={() => setViewMode('frame')}
+                    className="px-2.5 py-1 rounded border border-amber-500/40 text-amber-200 hover:text-white transition-colors"
+                  >
+                    Switch to Live Web View
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Loading State */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 text-slate-400 space-y-3">
@@ -616,7 +685,7 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                   No events currently found for &quot;{activeLocation}&quot;
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Try selecting one of the popular collegiate hubs to explore verified upcoming symposiums:
+                  Try selecting one of the popular collegiate hubs or post a symposium:
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 pt-2">
                   {canGoBack && (
@@ -658,20 +727,38 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
               /* Event Details Cards Grid */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEvents.map((fest) => {
+                  const cleanId = fest.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+                  const isSaved = savedEventIds.has(cleanId);
+
                   return (
                     <div
                       key={fest.id}
                       className="rounded-xl border border-slate-800 bg-slate-900/90 p-5 space-y-3 hover:border-slate-700 hover:shadow-lg transition-all flex flex-col justify-between group"
                     >
                       <div className="space-y-3">
-                        {/* Badges Row */}
+                        {/* Badges Row with Bookmark Toggle */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            {fest.city}
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
-                            {fest.category}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              {fest.city}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                              {fest.category}
+                            </span>
+                          </div>
+
+                          {/* Bookmark Button */}
+                          <button
+                            onClick={() => handleToggleBookmark(fest)}
+                            title={isSaved ? 'Remove from saved events' : 'Save to bookmarks'}
+                            className={`p-1.5 rounded-lg border transition-all ${
+                              isSaved
+                                ? 'border-emerald-500/60 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                                : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:text-white hover:border-slate-700'
+                            }`}
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-emerald-400 text-emerald-400' : ''}`} />
+                          </button>
                         </div>
 
                         {/* Title */}
@@ -714,10 +801,10 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                           href={fest.knowafestUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title="Open event page on KnowaFest.com"
+                          title="Open event page"
                           className="inline-flex items-center justify-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition-all"
                         >
-                          <span>Open in KnowaFest</span>
+                          <span>Open</span>
                           <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
                         </a>
                       </div>
@@ -766,7 +853,7 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                       {selectedEvent.city} &bull; {selectedEvent.category}
                     </span>
                     <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">
-                      KnowaFest Verified
+                      Verified Listing
                     </span>
                   </div>
                   <h2 className="font-display text-lg sm:text-xl font-bold text-white pt-1">
@@ -774,15 +861,37 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                   </h2>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  setSelectedEvent(null);
-                  setEventFullDetails(null);
-                }}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Save Bookmark button inside Modal */}
+                <button
+                  onClick={() => handleToggleBookmark(selectedEvent)}
+                  title="Bookmark event"
+                  className={`p-2 rounded-lg border transition-all ${
+                    savedEventIds.has(selectedEvent.id.replace(/[^a-zA-Z0-9_-]/g, '_'))
+                      ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300'
+                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Bookmark
+                    className={`w-4 h-4 ${
+                      savedEventIds.has(selectedEvent.id.replace(/[^a-zA-Z0-9_-]/g, '_'))
+                        ? 'fill-emerald-400 text-emerald-400'
+                        : ''
+                    }`}
+                  />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedEvent(null);
+                    setEventFullDetails(null);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body (Scrollable) */}
@@ -828,9 +937,9 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                     <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
                     <span>Loading real-time event description from KnowaFest...</span>
                   </div>
-                ) : eventFullDetails?.about ? (
+                ) : eventFullDetails?.about || selectedEvent.description ? (
                   <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 leading-relaxed space-y-2 whitespace-pre-line">
-                    <p>{eventFullDetails.about}</p>
+                    <p>{eventFullDetails?.about || selectedEvent.description}</p>
                   </div>
                 ) : (
                   <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 italic">
@@ -904,7 +1013,7 @@ export const KnowaFestLivePortal: React.FC<KnowaFestLivePortalProps> = ({
                   rel="noopener noreferrer"
                   className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-950"
                 >
-                  <span>Open in KnowaFest</span>
+                  <span>Open</span>
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>

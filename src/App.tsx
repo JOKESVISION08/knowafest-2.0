@@ -1,9 +1,14 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { KnowaFestLivePortal } from './components/KnowaFestLivePortal';
 import { Footer } from './components/Footer';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { SavedEventsModal } from './components/SavedEventsModal';
 import { KNOWAFEST_BASE_URL } from './data/initialData';
+import {
+  subscribeToSavedEvents,
+  SavedEventDoc,
+} from './services/storageService';
 
 export default function App() {
   const [currentUrl, setCurrentUrl] = useState<string>(KNOWAFEST_BASE_URL);
@@ -13,6 +18,18 @@ export default function App() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [previousLocationName, setPreviousLocationName] = useState('All Locations');
   const backHandlerRef = useRef<(() => void) | null>(null);
+
+  // Saved events state (Local storage)
+  const [savedEvents, setSavedEvents] = useState<SavedEventDoc[]>([]);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+
+  // Subscribe to user saved events in local storage
+  useEffect(() => {
+    const unsubSaved = subscribeToSavedEvents('local-user', (events) => {
+      setSavedEvents(events);
+    });
+    return () => unsubSaved();
+  }, []);
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
@@ -46,21 +63,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Top Navbar with Back Button & Install App Button */}
+      {/* Top Navbar with Back Button, Saved Events, and PWA Install */}
       <Navbar
         currentUrl={currentUrl}
         onRefresh={handleRefresh}
         canGoBack={canGoBack}
         onGoBack={handleGoBackNavbar}
         previousLocationName={previousLocationName}
+        onOpenSaved={() => setIsSavedModalOpen(true)}
+        savedCount={savedEvents.length}
       />
 
-      {/* Main Live Portal with Location Search, Event Details, and Back Navigation */}
+      {/* Main Live Portal with Location Search, Saved Events */}
       <main className="flex-1" key={refreshKey}>
         <KnowaFestLivePortal
           onUrlChange={(url) => setCurrentUrl(url)}
           onHistoryStateChange={handleHistoryStateChange}
           registerBackHandler={handleRegisterBackHandler}
+          savedEventIds={new Set(savedEvents.map((s) => s.eventId))}
         />
       </main>
 
@@ -69,6 +89,13 @@ export default function App() {
 
       {/* PWA Offline Indicator */}
       <OfflineIndicator />
+
+      {/* Saved Events Modal */}
+      <SavedEventsModal
+        isOpen={isSavedModalOpen}
+        onClose={() => setIsSavedModalOpen(false)}
+        savedEvents={savedEvents}
+      />
     </div>
   );
 }
