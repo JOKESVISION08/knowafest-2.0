@@ -1,0 +1,19 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/knowafest/live-events"
+  to = "/.netlify/functions/live-events"
+  status = 200
+
+[[redirects]]
+  from = "/api/knowafest/event-details"
+  to = "/.netlify/functions/event-details"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

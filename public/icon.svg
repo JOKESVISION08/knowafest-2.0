@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  
+  <!-- Outer Subtle Tech Ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#1e293b" stroke-width="4" stroke-dasharray="8 12"/>
+  <circle cx="256" cy="256" r="160" fill="none" stroke="url(#glowGrad)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Orbital Node Highlights -->
+  <circle cx="256" cy="66" r="8" fill="#10b981"/>
+  <circle cx="446" cy="256" r="8" fill="#06b6d4"/>
+  <circle cx="256" cy="446" r="8" fill="#10b981"/>
+  <circle cx="66" cy="256" r="8" fill="#06b6d4"/>
+
+  <!-- Central Emblem: Stylized Tech Beacon "K" & Innovation Globe -->
+  <g filter="url(#glow)">
+    <!-- Globe Grid Lines -->
+    <ellipse cx="256" cy="256" rx="110" ry="40" fill="none" stroke="#059669" stroke-width="4" opacity="0.4"/>
+    <ellipse cx="256" cy="256" rx="40" ry="110" fill="none" stroke="#059669" stroke-width="4" opacity="0.4"/>
+    
+    <!-- Bold 'K' Symbol for KnowaFest -->
+    <!-- Vertical Stem -->
+    <rect x="176" y="140" width="36" height="232" rx="18" fill="url(#accentGrad)"/>
+    
+    <!-- Upper Diagonal -->
+    <path d="M208 256 L310 152 C318 144 332 144 340 152 C348 160 348 174 340 182 L248 276 Z" fill="url(#accentGrad)"/>
+    
+    <!-- Lower Diagonal -->
+    <path d="M220 248 L328 356 C336 364 336 378 328 386 C320 394 306 394 298 386 L196 284 Z" fill="url(#accentGrad)"/>
+
+    <!-- Focal Glow Dot at Hub -->
+    <circle cx="228" cy="256" r="16" fill="#6ee7b7"/>
+    <circle cx="228" cy="256" r="8" fill="#ffffff"/>
+  </g>
+</svg>

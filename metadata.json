@@ -1,0 +1,6 @@
+{
+  "name": "TechFest Nexus & KnowaFest Connect",
+  "description": "Premier technical symposium portal with KnowaFest.com integration, event listings, registrations, paper abstract evaluator, and fest publishing console.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

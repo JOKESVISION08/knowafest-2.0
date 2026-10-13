@@ -1,0 +1,70 @@
+export const KNOWAFEST_BASE_URL = 'https://www.knowafest.com/events';
+
+export const POPULAR_LOCATIONS = [
+  { name: 'All Locations', query: '' },
+  { name: 'Coimbatore', query: 'coimbatore' },
+  { name: 'Chennai', query: 'chennai' },
+  { name: 'Bengaluru', query: 'bengaluru' },
+  { name: 'Salem', query: 'salem' },
+  { name: 'Trichy', query: 'trichy' },
+  { name: 'Madurai', query: 'madurai' },
+  { name: 'Erode', query: 'erode' },
+  { name: 'Vellore', query: 'vellore' },
+  { name: 'Hyderabad', query: 'hyderabad' },
+];
+
+export const POPULAR_COLLEGES = [
+  { name: 'All Colleges', query: '' },
+  { name: 'PSG Tech', query: 'PSG' },
+  { name: 'Anna University (CEG)', query: 'Anna University' },
+  { name: 'Kumaraguru (KCT)', query: 'Kumaraguru' },
+  { name: 'Sri Krishna (SKCET)', query: 'Sri Krishna' },
+  { name: 'KPR Institute', query: 'KPR' },
+  { name: 'Kongu Engineering', query: 'Kongu' },
+  { name: 'Bannari Amman (BIT)', query: 'Bannari' },
+  { name: 'SRM Institute', query: 'SRM' },
+  { name: 'VSB Engineering', query: 'VSB' },
+  { name: 'CIT Coimbatore', query: 'CIT' },
+  { name: 'VelTech HighTech', query: 'VelTech' },
+  { name: 'Hindusthan Institute', query: 'Hindusthan' },
+  { name: 'TCE Madurai', query: 'TCE' },
+  { name: 'Sona College', query: 'Sona' },
+  { name: 'NIT Trichy', query: 'NIT Trichy' },
+  { name: 'IIT Madras', query: 'IIT Madras' },
+  { name: 'SSN College', query: 'SSN' },
+  { name: 'PERI Institute', query: 'PERI' },
+  { name: 'RMK Engineering', query: 'RMK' },
+  { name: 'Dr NGP Tech', query: 'NGP' },
+  { name: 'KLN College', query: 'KLN' },
+  { name: 'Saranathan College', query: 'Saranathan' },
+  { name: 'Info Institute', query: 'Info Institute' },
+  { name: 'Rathinam Institutions', query: 'Rathinam' },
+  { name: 'Excel Engineering', query: 'Excel' },
+  { name: 'VIT Vellore', query: 'VIT' },
+  { name: 'Amrita University', query: 'Amrita' },
+];
+
+export const TECHNICAL_DEPARTMENTS = [
+  { name: 'All Streams', query: '' },
+  { name: 'ECE (Electronics)', query: 'ece' },
+  { name: 'CSE / IT', query: 'cse' },
+  { name: 'Robotics & Automation', query: 'robotics' },
+  { name: 'AI & Data Science', query: 'ai' },
+  { name: 'Mechanical', query: 'mech' },
+];
+
+export const MONTH_FILTERS = [
+  { name: 'All Months', value: 'all' },
+  { name: 'Jan', value: 'jan' },
+  { name: 'Feb', value: 'feb' },
+  { name: 'Mar', value: 'mar' },
+  { name: 'Apr', value: 'apr' },
+  { name: 'May', value: 'may' },
+  { name: 'Jun', value: 'jun' },
+  { name: 'Jul', value: 'jul' },
+  { name: 'Aug', value: 'aug' },
+  { name: 'Sep', value: 'sep' },
+  { name: 'Oct', value: 'oct' },
+  { name: 'Nov', value: 'nov' },
+  { name: 'Dec', value: 'dec' },
+];

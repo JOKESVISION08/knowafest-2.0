@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user id" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "Profile picture URL" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of user creation" }
+      },
+      "required": ["uid", "email"]
+    },
+    "SavedEvent": {
+      "title": "SavedEvent",
+      "description": "User bookmarked college event or symposium",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "eventId": { "type": "string", "description": "Target symposium ID" },
+        "title": { "type": "string", "description": "Event title" },
+        "college": { "type": "string", "description": "College name" },
+        "city": { "type": "string", "description": "City name" },
+        "date": { "type": "string", "description": "Event date" },
+        "category": { "type": "string", "description": "Category" },
+        "knowafestUrl": { "type": "string", "description": "Link to official page" },
+        "savedAt": { "type": "string", "description": "Timestamp when saved" }
+      },
+      "required": ["id", "userId", "eventId", "title"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User account documents stored by user UID"
+    },
+    "/savedEvents/{savedEventId}": {
+      "schema": "SavedEvent",
+      "description": "Bookmarked symposiums and hackathons"
+    }
+  }
+}
