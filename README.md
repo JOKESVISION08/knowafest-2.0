@@ -15,7 +15,7 @@
   <b>A production-grade Progressive Web Application (PWA) tracking 50+ real-time college technical symposiums, hackathons, and national conferences across Tamil Nadu districts with cloud database synchronization, offline persistence, and automatic over-the-air updates.</b>
 </p>
 
-[Live Demo](https://knowafest-2-0-mkkv064pv-d-square.vercel.app) • [GitHub Repository](https://github.com/JOKESVISION08/knowafest-2.0) • [Architecture](#-system-architecture) • [Key Features](#-key-features)
+[Live Demo](https://knowafest-2-0-9vre0h74e-d-square.vercel.app/?_vercel_share=5LJviuTaXKkDtNKb2afcrJHnEZznrXLG) • [GitHub Repository](https://github.com/JOKESVISION08/knowafest-2.0) • [Architecture](#-system-architecture) • [Key Features](#-key-features)
 
 ---
 
