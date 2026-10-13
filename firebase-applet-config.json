@@ -1,12 +1,13 @@
 {
-  "projectId": "d-sqaure",
-  "appId": "1:1059447512449:web:c102d79eb45761828b9c80",
-  "apiKey": "AIzaSyAuo2gK7bKeKcOehiKvpPtCl_dLbV5W_yA",
-  "authDomain": "d-sqaure.firebaseapp.com",
-  "firestoreDatabaseId": "knowafest",
-  "storageBucket": "d-sqaure.firebasestorage.app",
-  "messagingSenderId": "1059447512449",
-  "measurementId": "",
-  "oAuthClientId": "1059447512449-53agp74pauff3o7o90em6vogh3b616vn.apps.googleusercontent.com",
+  "projectId": "knowafest-d330f",
+  "appId": "1:523896146708:web:46b79bbdd36f95a82ed001",
+  "apiKey": "AIzaSyBR6BzWA6b0kfwAvuR-8taF3Ecg-1cSWWY",
+  "authDomain": "knowafest-d330f.firebaseapp.com",
+  "databaseURL": "https://knowafest-d330f-default-rtdb.firebaseio.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "knowafest-d330f.firebasestorage.app",
+  "messagingSenderId": "523896146708",
+  "measurementId": "G-WKN6XLF0BX",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

@@ -10,7 +10,7 @@ import {
   subscribeToSavedEvents,
   SavedEventDoc,
 } from './services/storageService';
-import { subscribeToAuth } from './firebase/authService';
+import { subscribeToAuth, checkRedirectAuthResult } from './firebase/authService';
 import { syncEventsByMonthAndDistrict } from './firebase/firestoreService';
 import { CURATED_EVENTS } from './data/curatedEvents';
 
@@ -35,8 +35,12 @@ export default function App() {
     });
   }, []);
 
-  // Track Firebase Auth user
+  // Track Firebase Auth user & check redirect login result (for installed PWA)
   useEffect(() => {
+    checkRedirectAuthResult().catch((err) => {
+      console.warn('Redirect auth check notice:', err);
+    });
+
     const unsubAuth = subscribeToAuth((user) => {
       setCurrentUserId(user ? user.uid : 'local-user');
     });

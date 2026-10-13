@@ -1,5 +1,7 @@
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously,
   signOut,
   onAuthStateChanged,
@@ -54,13 +56,49 @@ export async function syncUserProfile(user: User): Promise<void> {
   }
 }
 
-export async function loginWithGoogle(): Promise<User> {
+export async function checkRedirectAuthResult(): Promise<User | null> {
   try {
-    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    const res = await getRedirectResult(auth);
+    if (res && res.user) {
+      await syncUserProfile(res.user);
+      return res.user;
+    }
+  } catch (err) {
+    console.warn('Redirect sign-in check notice:', err);
+  }
+  return null;
+}
+
+export async function loginWithGoogle(): Promise<User | void> {
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+  // Standalone installed PWA check
+  const isStandalone =
+    typeof window !== 'undefined' &&
+    (window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true);
+
+  if (isStandalone) {
+    // Mobile installed PWAs handle redirects much better than popup windows
+    await signInWithRedirect(auth, googleProvider);
+    return;
+  }
+
+  try {
     const result = await signInWithPopup(auth, googleProvider);
     await syncUserProfile(result.user);
     return result.user;
   } catch (error: any) {
+    // If popup was blocked or closed by installed browser window, fallback to redirect
+    if (
+      error.code === 'auth/popup-blocked' ||
+      error.code === 'auth/popup-closed-by-user' ||
+      error.code === 'auth/cancelled-popup-request'
+    ) {
+      console.info('Popup blocked/closed, redirecting for sign-in...');
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
     console.error('Google sign-in error:', error);
     throw error;
   }
