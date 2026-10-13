@@ -14,6 +14,8 @@ export const AuthUserButton: React.FC<AuthUserButtonProps> = ({
 }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const unsub = subscribeToAuth((user) => {
@@ -22,12 +24,41 @@ export const AuthUserButton: React.FC<AuthUserButtonProps> = ({
     return () => unsub();
   }, []);
 
-  const handleSignIn = async () => {
+  const handleSignInGoogle = async () => {
     setIsSigningIn(true);
+    setErrorMessage('');
     try {
       await loginWithGoogle();
-    } catch (err) {
-      console.warn('Google sign-in canceled or blocked:', err);
+      setShowModal(false);
+    } catch (err: any) {
+      console.error('Google sign-in error:', err);
+      let msg = err.message || 'Failed to sign in with Google';
+      if (err.code === 'auth/unauthorized-domain') {
+        msg = `Domain not authorized in Firebase! Please add "${window.location.hostname}" to Firebase Console -> Authentication -> Settings -> Authorized domains.`;
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Google provider is not enabled! Enable "Google" under Firebase Console -> Authentication -> Sign-in method.';
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Browser popup blocked. Redirecting...';
+      }
+      setErrorMessage(msg);
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignInGuest = async () => {
+    setIsSigningIn(true);
+    setErrorMessage('');
+    try {
+      await loginAsGuest();
+      setShowModal(false);
+    } catch (err: any) {
+      console.error('Guest sign-in error:', err);
+      let msg = err.message || 'Failed to sign in as guest';
+      if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Anonymous login is not enabled! Enable "Anonymous" under Firebase Console -> Authentication -> Sign-in method.';
+      }
+      setErrorMessage(msg);
     } finally {
       setIsSigningIn(false);
     }
@@ -78,21 +109,74 @@ export const AuthUserButton: React.FC<AuthUserButtonProps> = ({
           <button
             onClick={handleSignOut}
             title="Sign out of Firebase"
-            className="p-1 text-slate-400 hover:text-rose-400 transition-colors ml-1"
+            className="p-1 text-slate-400 hover:text-rose-400 transition-colors ml-1 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       ) : (
         <button
-          onClick={handleSignIn}
+          onClick={() => setShowModal(true)}
           disabled={isSigningIn}
-          title="Sign in with Google to sync bookmarks across devices"
+          title="Sign in to sync bookmarks and profile"
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/60 text-xs font-semibold text-emerald-300 hover:text-white transition-all cursor-pointer shadow-sm"
         >
           <LogIn className="w-3.5 h-3.5 text-emerald-400" />
           <span className="hidden md:inline">{isSigningIn ? 'Connecting...' : 'Sign In'}</span>
         </button>
+      )}
+
+      {/* Sign In Options Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl text-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <h3 className="font-bold text-base text-white">Sign In to KnowaFest</h3>
+              <button
+                onClick={() => { setShowModal(false); setErrorMessage(''); }}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Choose how you want to sign in to save symposium bookmarks and record your profile:
+            </p>
+
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/50 text-rose-200 text-xs leading-relaxed">
+                <p className="font-bold mb-1">⚠️ Sign-in Issue:</p>
+                <p>{errorMessage}</p>
+              </div>
+            )}
+
+            <div className="space-y-2.5 pt-1">
+              <button
+                onClick={handleSignInGoogle}
+                disabled={isSigningIn}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50 shadow"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>{isSigningIn ? 'Connecting...' : 'Sign in with Google'}</span>
+              </button>
+
+              <button
+                onClick={handleSignInGuest}
+                disabled={isSigningIn}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <UserIcon className="w-4 h-4 text-emerald-400" />
+                <span>{isSigningIn ? 'Connecting...' : 'Continue as Student Guest'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
